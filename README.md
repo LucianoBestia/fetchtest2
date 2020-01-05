@@ -21,8 +21,16 @@ It can be an async fn or an async block. It is not yet executed, only prepared.
 The `.await?` means the next line of code will wait for this line to finish,
 but not blocking the active thread. It will work in another timeline.  
 Still nothing is executed, only prepared.  
+
+### future_to_promise
+
 The async code is executed by an `executor`. In Wasm it is `future_to_promise()`.  
 The async fn must return Result<JsValue, JsValue> because of that.  
+
+### spawn_local
+
+This is the recommanded executor for futures in wasm. No need for return value.  
+If there is an error it will be aborted and visible in the browser console.  
 
 ## build and run
 

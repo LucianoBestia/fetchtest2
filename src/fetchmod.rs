@@ -4,9 +4,8 @@
 //! With the new async/.await syntax in Rust it is now very easy to write async code.
 //! It is important to be carefull to NOT write sync code after async code.
 //! It can be confusing that the sync code will execute before the async code !
-//! Webassembly is basically javascript and uses the executor future_to_promise()
-//! The async fn that is called must return Result<JsValue, JsValue>
-//! and it cannot use any references to the stack because it is executed in another timeline.
+//! Webassembly is basically javascript and uses the executor spawn_local() or future_to_promise().
+//! Async cannot use any references to the stack because it is executed in another timeline.
 //endregion
 
 //region: use
@@ -18,11 +17,9 @@ use web_sys::{Request, RequestInit, Response};
 use wasm_bindgen_futures::{JsFuture};
 //endregion
 
-/// fetch in Rust with async await
-/// the result must be Result<JsValue, JsValue> because I will use future_to_promise() executor
-/// or it can be used in another async fn or block
-/// it returns the Response as a JsValue
-pub async fn async_fetch(url: String) -> Result<JsValue, JsValue> {
+/// fetch in Rust with async await for executor future_to_promise()
+/// the result must be Result<JsValue, JsValue>. Any error will be returned in the Result.
+pub async fn async_futopr_fetch(url: String) -> Result<JsValue, JsValue> {
     //Request init
     let mut opts = RequestInit::new();
     opts.method("GET");
@@ -32,6 +29,28 @@ pub async fn async_fetch(url: String) -> Result<JsValue, JsValue> {
     let resp: Response = unwrap!(resp_jsvalue.dyn_into());
     let text_jsvalue = JsFuture::from(resp.text()?).await?;
     log1(&unwrap!(JsValue::as_string(&text_jsvalue)));
-    //return
+    //return the response as jsValue object
     Ok(text_jsvalue)
+}
+
+/// fetch in Rust with async await for executor spawn_local()
+/// return the response as JsValue. Any error will panic.
+pub async fn async_spwloc_fetch(url: String) -> JsValue {
+    //Request init
+    let mut opts = RequestInit::new();
+    opts.method("GET");
+    let request = unwrap!(Request::new_with_str_and_init(&url, &opts));
+    let window = unwrap!(web_sys::window());
+    //log1("before fetch");
+    let resp_jsvalue = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .unwrap();
+    //log1("after fetch");
+    let resp: Response = unwrap!(resp_jsvalue.dyn_into());
+    //log1("before text()");
+    let text_jsvalue = JsFuture::from(resp.text().unwrap()).await.unwrap();
+    //log1("after text()");
+    log1(&unwrap!(JsValue::as_string(&text_jsvalue)));
+    //returns response as JsValue
+    text_jsvalue
 }

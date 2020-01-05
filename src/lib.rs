@@ -80,7 +80,7 @@ use dodrio::{Node, Render};
 use typed_html::dodrio;
 use serde::{Deserialize, Serialize};
 use web_sys::{console};
-use wasm_bindgen_futures::{future_to_promise};
+use wasm_bindgen_futures::{future_to_promise, spawn_local};
 //endregion
 
 ///simple console write with a string
@@ -127,6 +127,7 @@ impl RootRenderingComponent {
 
 // The `Render` implementation. It is called for every Dodrio animation frame to render the vdom.
 impl Render for RootRenderingComponent {
+    #[allow(clippy::panic)]
     fn render<'a, 'bump>(&'a self, bump: &'bump Bump) -> Node<'bump>
     where
         'a: 'bump,
@@ -136,26 +137,37 @@ impl Render for RootRenderingComponent {
             <div>
                 <h1>
                     {vec![text(
-                        bumpalo::format!(in bump, "fetchtest2 - rust async/await{}",
+                        bumpalo::format!(in bump, "fetchtest2 - rust future_to_promise async/await{}",
                         "")
                         .into_bump_str()
                     )]}
                 </h1>
                 <button style= "margin:auto;display:block;" onclick={ move |root, vdom, _event| {
-                    //Here I don't want to have an illusion of calling a normal sync fn.
-                    //Because that allows the mistake to put code after this line
-                    //and believe erroneously that it will be executed after that.
-                    //I really want to make it super visible that this code here is async
-                    //and that any line of code after that will not be executed as
-                    //you intuitively think.
                     //future_to_promise() is an executor that works with wasm.
                     let url ="https://jsonplaceholder.typicode.com/todos/1".to_owned();
-                    let _x = future_to_promise(async_fetch_and_write(url));
+                    future_to_promise(async_futopr_fetch_and_write(url));
                     //The code after the async executor will not wait for the async execution.
                     //In most cases having code here is misplaced.
-                    log1("end of on click");
-                }}>"fetch rust async await"</button>
-                <div id="for_fetch_rust_async_await">
+                    log1("end of on futopr click");
+                }}>"fetch rust async await fu. to pr."</button>
+                <div id="for_fetch_rust_futopr_async_await">
+                </div>
+                <h1>
+                    {vec![text(
+                        bumpalo::format!(in bump, "fetchtest2 - rust spawn_local async/await{}",
+                        "")
+                        .into_bump_str()
+                    )]}
+                </h1>
+                <button style= "margin:auto;display:block;" onclick={ move |root, vdom, _event| {
+                    //async executor spawn_local is the recommanded for wasm
+                    let url ="https://jsonplaceholder.typicode.com/todos/1".to_owned();
+                    spawn_local(async_spwloc_fetch_and_write(url));
+                    //The code after the async executor will not wait for the async execution.
+                    //In most cases having code here is misplaced.
+                    log1("end of on spwloc click");
+                }}>"fetch rust async await spawn_local."</button>
+                <div id="for_fetch_rust_spwloc_async_await">
                 </div>
             </div>
         )
@@ -163,23 +175,33 @@ impl Render for RootRenderingComponent {
 }
 
 //region: fetch in Rust with async await
-/// the main async fn for this example
-/// the result must be Result<JsValue, JsValue> because I will use the future_to_promise() executor
+/// the async fn for executor futopr == future_to_promise
+/// the result must be Result<JsValue, JsValue>
 /// no references to stack allowed beause it is executed in another timeline unknown when
-pub async fn async_fetch_and_write(url: String) -> Result<JsValue, JsValue> {
-    let text_jsvalue = fetchmod::async_fetch(url).await?;
-    write_result(&text_jsvalue, "for_fetch_rust_async_await");
-    log1("end of async_fetch_and_write()");
+pub async fn async_futopr_fetch_and_write(url: String) -> Result<JsValue, JsValue> {
+    let text_jsvalue = fetchmod::async_futopr_fetch(url).await?;
+    write_result(&text_jsvalue, "for_fetch_rust_futopr_async_await");
+    log1("end of async_futopr_fetch_and_write()");
     Ok(text_jsvalue)
 }
 
+/// the async fn for executor spwloc == spawn_local
+/// the result must be ()
+/// no references to stack allowed beause it is executed in another timeline unknown when
+pub async fn async_spwloc_fetch_and_write(url: String) {
+    let text_jsvalue = fetchmod::async_spwloc_fetch(url).await;
+    log1("after async_spwloc_fetch");
+    write_result(&text_jsvalue, "for_fetch_rust_spwloc_async_await");
+    log1("end of async_futopr_fetch_and_write()");
+}
+
 /// this is just a normal sync function
-/// it can be called from an async fn
+/// it can be called from an async fn too.
 fn write_result(text_jsvalue: &JsValue, div_id: &str) {
     let txt: String = unwrap!(JsValue::as_string(text_jsvalue));
     let window = unwrap!(web_sys::window());
     let document = unwrap!(window.document());
-    let div_for_fetch_rust_async_await = unwrap!(document.get_element_by_id(div_id));
-    div_for_fetch_rust_async_await.set_inner_html(&txt);
+    let div_for_fetch_rust_futopr_async_await = unwrap!(document.get_element_by_id(div_id));
+    div_for_fetch_rust_futopr_async_await.set_inner_html(&txt);
 }
 //endregion
