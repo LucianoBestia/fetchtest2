@@ -42,13 +42,11 @@ pub async fn async_spwloc_fetch(url: String) -> JsValue {
     let request = unwrap!(Request::new_with_str_and_init(&url, &opts));
     let window = unwrap!(web_sys::window());
     //log1("before fetch");
-    let resp_jsvalue = JsFuture::from(window.fetch_with_request(&request))
-        .await
-        .unwrap();
+    let resp_jsvalue = unwrap!(JsFuture::from(window.fetch_with_request(&request)).await);
     //log1("after fetch");
     let resp: Response = unwrap!(resp_jsvalue.dyn_into());
     //log1("before text()");
-    let text_jsvalue = JsFuture::from(resp.text().unwrap()).await.unwrap();
+    let text_jsvalue = unwrap!(JsFuture::from(unwrap!(resp.text())).await);
     //log1("after text()");
     log1(&unwrap!(JsValue::as_string(&text_jsvalue)));
     //returns response as JsValue
