@@ -20,8 +20,9 @@ lto = true
 opt-level = 'z'
 
 [dependencies]
+cfg-if="0.1.10"
 unwrap = "1.2.1"
-dodrio = "0.1.0"
+dodrio =  { git = "https://github.com/fitzgen/dodrio", branch = "master" }
 wasm-bindgen = { version = "0.2.56", features = ["serde-serialize"] }
 console_error_panic_hook = "0.1.6"
 js-sys = "0.3"

@@ -75,8 +75,8 @@ extern crate conv;
 
 use dodrio::builder::text;
 use wasm_bindgen::prelude::*;
-use dodrio::bumpalo::{self, Bump};
-use dodrio::{Node, Render};
+use dodrio::bumpalo::{self};
+use dodrio::{Node, Render, RenderContext};
 use typed_html::dodrio;
 use serde::{Deserialize, Serialize};
 use web_sys::{console};
@@ -120,7 +120,7 @@ impl RootRenderingComponent {
     fn new() -> RootRenderingComponent {
         //return
         RootRenderingComponent {
-            respbody: "".to_string(),
+            respbody: "".to_owned(),
         }
     }
 }
@@ -128,11 +128,9 @@ impl RootRenderingComponent {
 // The `Render` implementation. It is called for every Dodrio animation frame to render the vdom.
 impl Render for RootRenderingComponent {
     #[allow(clippy::panic)]
-    fn render<'a, 'bump>(&'a self, bump: &'bump Bump) -> Node<'bump>
-    where
-        'a: 'bump,
-    {
+    fn render<'a>(&self, cx: &mut RenderContext<'a>) -> Node<'a> {
         //create the virtual dom
+        let bump = cx.bump;
         dodrio!(bump,
             <div>
                 <h1>
@@ -160,14 +158,29 @@ impl Render for RootRenderingComponent {
                     )]}
                 </h1>
                 <button style= "margin:auto;display:block;" onclick={ move |root, vdom, _event| {
+                    let v2=vdom.clone();
                     //async executor spawn_local is the recommanded for wasm
                     let url ="https://jsonplaceholder.typicode.com/todos/1".to_owned();
-                    spawn_local(async_spwloc_fetch_and_write(url));
+                    spawn_local(async_spwloc_fetch_and_write(url,v2));
                     //The code after the async executor will not wait for the async execution.
                     //In most cases having code here is misplaced.
                     log1("end of on spwloc click");
                 }}>"fetch rust async await spawn_local."</button>
                 <div id="for_fetch_rust_spwloc_async_await">
+                </div>
+                <div id="respbody">
+                <h1>
+                {vec![text(
+                    bumpalo::format!(in bump, "rrc.respbody from vdom{}",
+                    "")
+                    .into_bump_str()
+                )]}
+            </h1>
+                {vec![text(
+                    bumpalo::format!(in bump, "{}",
+                    self.respbody)
+                    .into_bump_str()
+                )]}
                 </div>
             </div>
         )
@@ -175,23 +188,27 @@ impl Render for RootRenderingComponent {
 }
 
 //region: fetch in Rust with async await
-/// the async fn for executor futopr == future_to_promise
-/// the result must be Result<JsValue, JsValue>
-/// no references to stack allowed beause it is executed in another timeline unknown when
-pub async fn async_futopr_fetch_and_write(url: String) -> Result<JsValue, JsValue> {
-    let text_jsvalue = fetchmod::async_futopr_fetch(url).await?;
-    write_result(&text_jsvalue, "for_fetch_rust_futopr_async_await");
-    log1("end of async_futopr_fetch_and_write()");
-    Ok(text_jsvalue)
-}
 
 /// the async fn for executor spwloc == spawn_local
 /// the result must be ()
 /// no references to stack allowed beause it is executed in another timeline unknown when
-pub async fn async_spwloc_fetch_and_write(url: String) {
+pub async fn async_spwloc_fetch_and_write(url: String, vdom: dodrio::VdomWeak) {
     let text_jsvalue = fetchmod::async_spwloc_fetch(url).await;
     log1("after async_spwloc_fetch");
     write_result(&text_jsvalue, "for_fetch_rust_spwloc_async_await");
+    let txt_str: String = unwrap!(JsValue::as_string(&text_jsvalue));
+    //the vdom is omnipresent. To change a value in the rrc struct I must use the Vdom.
+    //the with_components will execute on the next browser tick to avoid data races
+    let x = unwrap!(
+        vdom.with_component({
+            move |root| {
+                let rrc = root.unwrap_mut::<RootRenderingComponent>();
+                rrc.respbody = txt_str;
+            }
+        })
+        .await
+    );
+    vdom.schedule_render();
     log1("end of async_futopr_fetch_and_write()");
 }
 
@@ -204,4 +221,15 @@ fn write_result(text_jsvalue: &JsValue, div_id: &str) {
     let div_for_fetch_rust_futopr_async_await = unwrap!(document.get_element_by_id(div_id));
     div_for_fetch_rust_futopr_async_await.set_inner_html(&txt);
 }
+
+/// the async fn for executor futopr == future_to_promise
+/// the result must be Result<JsValue, JsValue>
+/// no references to stack allowed beause it is executed in another timeline unknown when
+pub async fn async_futopr_fetch_and_write(url: String) -> Result<JsValue, JsValue> {
+    let text_jsvalue = fetchmod::async_futopr_fetch(url).await?;
+    write_result(&text_jsvalue, "for_fetch_rust_futopr_async_await");
+    log1("end of async_futopr_fetch_and_write()");
+    Ok(text_jsvalue)
+}
+
 //endregion
