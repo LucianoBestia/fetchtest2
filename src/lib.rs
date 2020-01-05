@@ -163,8 +163,9 @@ impl Render for RootRenderingComponent {
 }
 
 //region: fetch in Rust with async await
+/// the main async fn for this example
 /// the result must be Result<JsValue, JsValue> because I will use the future_to_promise() executor
-/// no references to stack allowed beause it is executed in nother timeline unknown when
+/// no references to stack allowed beause it is executed in another timeline unknown when
 pub async fn async_fetch_and_write(url: String) -> Result<JsValue, JsValue> {
     let text_jsvalue = fetchmod::async_fetch(url).await?;
     write_result(&text_jsvalue, "for_fetch_rust_async_await");
@@ -173,6 +174,7 @@ pub async fn async_fetch_and_write(url: String) -> Result<JsValue, JsValue> {
 }
 
 /// this is just a normal sync function
+/// it can be called from an async fn
 fn write_result(text_jsvalue: &JsValue, div_id: &str) {
     let txt: String = unwrap!(JsValue::as_string(text_jsvalue));
     let window = unwrap!(web_sys::window());
