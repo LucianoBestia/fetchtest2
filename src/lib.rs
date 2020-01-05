@@ -189,7 +189,7 @@ impl Render for RootRenderingComponent {
 
 //region: fetch in Rust with async await
 
-/// the async fn for executor spwloc == spawn_local
+/// recomanded: the async fn for executor spwloc == spawn_local
 /// the result must be ()
 /// no references to stack allowed beause it is executed in another timeline unknown when
 pub async fn async_spwloc_fetch_and_write(url: String, vdom: dodrio::VdomWeak) {
@@ -199,7 +199,7 @@ pub async fn async_spwloc_fetch_and_write(url: String, vdom: dodrio::VdomWeak) {
     let txt_str: String = unwrap!(JsValue::as_string(&text_jsvalue));
     //the vdom is omnipresent. To change a value in the rrc struct I must use the Vdom.
     //the with_components will execute on the next browser tick to avoid data races
-    let x = unwrap!(
+    let _x = unwrap!(
         vdom.with_component({
             move |root| {
                 let rrc = root.unwrap_mut::<RootRenderingComponent>();
@@ -214,6 +214,8 @@ pub async fn async_spwloc_fetch_and_write(url: String, vdom: dodrio::VdomWeak) {
 
 /// this is just a normal sync function
 /// it can be called from an async fn too.
+/// this is a raw writing to the DOM - not the virtual DOM
+/// it is o for temporary debugging, but not of a permanent value
 fn write_result(text_jsvalue: &JsValue, div_id: &str) {
     let txt: String = unwrap!(JsValue::as_string(text_jsvalue));
     let window = unwrap!(web_sys::window());
@@ -222,6 +224,7 @@ fn write_result(text_jsvalue: &JsValue, div_id: &str) {
     div_for_fetch_rust_futopr_async_await.set_inner_html(&txt);
 }
 
+/// not recomanded
 /// the async fn for executor futopr == future_to_promise
 /// the result must be Result<JsValue, JsValue>
 /// no references to stack allowed beause it is executed in another timeline unknown when
