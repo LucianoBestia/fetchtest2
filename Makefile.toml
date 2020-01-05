@@ -1,0 +1,68 @@
+# fetchtest2/Makefile.toml
+# https://github.com/sagiegurari/cargo-make/blob/master/src/lib/Makefile.stable.toml
+
+[config]
+skip_core_tasks = true
+
+#region: public callable tasks/flows
+
+    [tasks.default]
+    description = "show list of public callable tasks"
+    clear = true
+    command = "cargo"
+    args = ["make","--list-all-steps"]
+
+    [tasks.dev]
+    description = "cargo build development"
+    clear = true
+    dependencies = [
+        "build_dev",
+        "post_build",
+    ]
+
+    [tasks.release]
+    description = "cargo build release"
+    clear = true
+    dependencies = [
+        "build_release",
+        "post_build",
+    ]
+
+# endregion
+
+[tasks.build_dev]
+clear = true
+private = true
+command = "wasm-pack"
+args = ["build", "--target", "web","--dev", "--no-typescript"]
+
+[tasks.build_release]
+clear = true
+private = true
+command = "wasm-pack"
+args = ["build","--target", "web","--release", "--no-typescript"]
+
+[tasks.post_build]
+clear = true
+private = true
+windows_alias = "windows_post_build"
+linux_alias = "linux_post_build"
+
+[tasks.windows_post_build]
+clear = true
+private = true
+script = [
+    # chrome has a super security for cross-origin and it does not work well here
+    "start chrome http://127.0.0.1:8086", 
+    #"start \"firefox\" \"C:\\Program Files\\Mozilla Firefox\\firefox.exe\" 127.0.0.1:8086",
+    "basic-http-server -a 127.0.0.1:8086",
+]
+
+[tasks.linux_post_build]
+clear = true
+private = true
+script = [
+    "alias chrome=\"/mnt/c/Program\\ Files\\ \\(x86\\)/Google/Chrome/Application/chrome.exe\"",
+    "chrome http://127.0.0.1:8086", 
+    "basic-http-server -a 127.0.0.1:8086",
+]

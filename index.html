@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <title>fetchtest2</title>
+  <link rel="stylesheet" href="css/fetchtest2.css">
+</head>
+
+<body>
+  <!--Here I have 2 sections/divs: 
+    first javascript async+await
+    and then rust code async + await
+    -->
+  <!--section/div for javascript async await-->
+  <div id="fetch_js_async_await">
+    <h1>fetchtest2 - javascript async+await</h1>
+    <button style="margin:auto;display:block;" onclick='{
+      async function get_data_and_write() 
+      {
+        //async+await is so much readable
+        let response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
+        console.log("fetch response");
+        let txt = await response.text();
+        console.log(txt);
+        var div=document.getElementById("for_fetch_js_async_await"); 
+        div.innerHTML=txt;
+        console.log("after div.innerHTML"); 
+      }
+  
+      get_data_and_write()
+
+      }'>fetch javascript asyn await</button>
+    <div id="for_fetch_js_async_await">
+    </div>
+  </div>
+  <!--section/div for rust/wasm code-->
+  <div id="div_for_virtual_dom">
+  </div>
+
+  <!--importing rust/wasm code-->
+  <script type="module">
+    import init from "./pkg/fetchtest2.js";
+    init("./pkg/fetchtest2_bg.wasm");
+  </script>
+</body>
+
+</html>
