@@ -23,6 +23,7 @@ body {
     -ms-user-select: none;
     -o-user-select: none;
     user-select: none;
+    text-align: center;
 }
 
 h1,
@@ -34,7 +35,6 @@ h6 {
     font-family: "Segoe UI", Arial, sans-serif;
     font-weight: 400;
     margin: 10px 0;
-    text-align: center;
 }
 
 h1 {
