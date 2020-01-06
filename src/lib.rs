@@ -227,7 +227,22 @@ pub async fn async_spwloc_fetch_and_rrcwrite(url: String, vdom: dodrio::VdomWeak
     let text_jsvalue = fetchmod::async_spwloc_fetch(url).await;
     let txt_str: String = unwrap!(JsValue::as_string(&text_jsvalue));
     //update values in rrc is async
-    update_rrc(vdom, txt_str).await;
+    //I can use a fn call or an async block
+    //update_rrc(vdom, txt_str).await;
+
+    async {
+        unwrap!(
+            vdom.with_component({
+                move |root| {
+                    let rrc = root.unwrap_mut::<RootRenderingComponent>();
+                    rrc.respbody = txt_str;
+                }
+            })
+            .await
+        );
+        vdom.schedule_render();
+    }
+    .await;
 
     log1("end of async_spwloc_fetch_and_rrcwrite()");
 }
