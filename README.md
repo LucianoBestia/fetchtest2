@@ -52,3 +52,12 @@ Type and run this in the project folder
 `cargo make dev` or `cargo make release`  
 To install cargo-make  
 `cargo install --force cargo-make`  
+
+## cargo crev reviews and advisory
+
+It is recommended to always use [cargo-crev](https://github.com/crev-dev/cargo-crev)  
+to verify the trustworthiness of each of your dependencies.  
+Please, spread this info.  
+On the web use this url to read crate reviews. Example:  
+<https://bestia.dev/cargo_crev_web/query/num-traits>  
+

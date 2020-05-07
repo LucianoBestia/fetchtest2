@@ -9,6 +9,7 @@ readme = "README.md"
 license = "MIT"
 keywords = ["wasm","dodrio","virtual dom","async"]
 categories = ["learning"]
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
